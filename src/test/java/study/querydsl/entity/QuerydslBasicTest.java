@@ -1,7 +1,6 @@
 package study.querydsl.entity;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static study.querydsl.entity.QMember.member; // static import 엄청 권장
 
 @SpringBootTest
 @Transactional
@@ -54,12 +54,12 @@ public class QuerydslBasicTest {
 
     @Test
     void startQueryDSL(){
-        QMember m = QMember.member;
-
+        // QMember member = new QMember("m"); -> 같은 테이블을 조인해야 할 때만 별칭으로 쓰고
+        // 평상시에는 static import로 처리를 권장
         Member findMember = queryFactory
-                .select(m)
-                .from(m)
-                .where(m.username.eq("member1"))    // 파라미터 바인딩 처리
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))    // 파라미터 바인딩 처리
                 .fetchOne();
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
