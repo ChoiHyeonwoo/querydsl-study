@@ -1,5 +1,6 @@
 package study.querydsl.entity;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -88,5 +91,34 @@ public class QuerydslBasicTest {
                 .fetchOne();
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void resultFetch(){
+        /*List<Member> members = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        Member fetchOne = queryFactory
+                    .select(member)
+                    .fetchOne();
+
+
+        Member fetchFirst = queryFactory
+                .select(member)
+                .fetchFirst();*/
+
+        // 페이징 처리
+        QueryResults<Member> results = queryFactory
+                .selectFrom(member)
+                .fetchResults();
+        results.getTotal(); // 전체 count -> total count 쿼리를 또 실행.
+        List<Member> content = results.getResults(); // paging 처리 내용.
+
+        // count
+        long count = queryFactory
+                .selectFrom(member)
+                .fetchCount();
+
     }
 }
