@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
 import study.querydsl.dto.QMemberDto;
@@ -631,5 +632,54 @@ public class QuerydslBasicTest {
 
     private Predicate allEq(String usernameParam, Integer ageParam) {
         return usernameEq(usernameParam).and(ageEq(ageParam));
+    }
+
+    @Test
+    /* @Commit 테스트 코드에서 쿼리가 적용 */
+    public void bulkUpdate(){
+
+        // member1 = 10 -> 비회원
+        // member2 = 20 -> 비회원
+        // member3 = 30 -> 유지
+        // member4 = 40 -> 유지
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        // bulk는 DB에 직접 실행. (영속성 컨텍스트[1차캐시 무시])
+        // 영속성 컨텍스트와 DB의 상태가 달라진다.
+        // bulkupdate 후 select 시에 영속성 컨텍스트에 있는 객체를 가져옴.
+
+        em.flush();
+        em.clear(); // 영속성 초기화.
+
+    }
+
+    /**
+     * 모든 회원의 나이를 조작한다.
+     */
+    @Test
+    public void bulkAdd(){
+        long count = queryFactory
+                .update(member)
+                //.set(member.age, member.age.add(1)) // 마이너스가 없음 ( member.age.add(-1) 로 )
+                .set(member.age, member.age.multiply(2)) // 2 곱하기
+                .execute();
+
+        em.flush();
+        em.clear(); // 영속성 초기화.
+    }
+
+    @Test
+    public void bulkDelete(){
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+        em.flush();
+        em.clear(); // 영속성 초기화.
     }
 }
