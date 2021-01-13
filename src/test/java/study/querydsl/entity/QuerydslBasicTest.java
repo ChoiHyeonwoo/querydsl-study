@@ -682,4 +682,38 @@ public class QuerydslBasicTest {
         em.flush();
         em.clear(); // 영속성 초기화.
     }
+    //SQLDialect에 등록된 함수만 사용가능하다.
+    //직접 만든 펑션을 사용하고 싶은경우
+    //Dialect를 직접 구현한 후 사용. (application.properties 에 등록해야함)
+    @Test
+    public void sqlFunction(){
+        List<String> result = queryFactory
+                .select(
+                        Expressions.stringTemplate(
+                                "function('replace', {0}, {1}, {2})",
+                                member.username, "member", "M"
+                        )
+                )
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+    @Test
+    public void sqlFunction2(){
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                /*.where(member.username.eq(
+                        Expressions.stringTemplate(
+                                "function ('lower', {0})",member.username)))*/
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
 }
