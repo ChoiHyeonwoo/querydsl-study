@@ -118,6 +118,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount);
         // count 쿼리의 최적화
         // count 쿼리가 필요없을때(수가 적어 첫 페이지에 모든 컨텐츠 다 표현 or 마지막 페이지 호출 .. etc)
+        // count 쿼리가 실제 이 함수에서 실행되지 않음!!
     }
 
 
