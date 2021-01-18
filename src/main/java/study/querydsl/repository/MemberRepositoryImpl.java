@@ -2,13 +2,16 @@ package study.querydsl.repository;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
+import study.querydsl.entity.Member;
 
 import java.util.List;
 
@@ -79,32 +82,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
     @Override
     public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable) {
-        List<MemberTeamDto> content = getMemberTeamDtos(condition, pageable);
-
-        long total = getTotal(condition, pageable);
-
-        return new PageImpl<>(content, pageable, total);
-    }
-
-    private long getTotal(MemberSearchCondition condition, Pageable pageable) {
-        return queryFactory
-                .select(member)
-                .from(member)
-                .leftJoin(member.team, team)
-                .where(
-                        usernameEq(condition.getUsername()),
-                        teamNameEq(condition.getTeamName()),
-                        ageGoe(condition.getAgeGoe()),
-                        ageLoe(condition.getAgeLoe())
-                )
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetchCount();    // count 쿼리.
-        // count 쿼리, content 쿼리 분리의 장점-> count 쿼리의 최적화가 가능(count 쿼리에 조인이나 뭐 다른 옵션이 없을 수 있음.)
-    }
-
-    private List<MemberTeamDto> getMemberTeamDtos(MemberSearchCondition condition, Pageable pageable) {
-        return queryFactory
+        List<MemberTeamDto> content = queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
                         member.username,
@@ -123,7 +101,25 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();    // content 쿼리.
+
+         JPAQuery<Member> countQuery = queryFactory
+                .select(member)
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(
+                        usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe())
+                );    // count 쿼리.
+        // count 쿼리, content 쿼리 분리의 장점-> count 쿼리의 최적화가 가능(count 쿼리에 조인이나 뭐 다른 옵션이 없을 수 있음.)
+
+        /*return new PageImpl<>(content, pageable, total);*/
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount);
+        // count 쿼리의 최적화
+        // count 쿼리가 필요없을때(수가 적어 첫 페이지에 모든 컨텐츠 다 표현 or 마지막 페이지 호출 .. etc)
     }
+
 
     private BooleanExpression usernameEq(String username) {
         return hasText(username) ? member.username.eq(username) : null;
