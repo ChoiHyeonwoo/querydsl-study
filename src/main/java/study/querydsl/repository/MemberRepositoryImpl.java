@@ -7,19 +7,25 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.data.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
 import study.querydsl.entity.Member;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 import static org.springframework.util.StringUtils.hasText;
 import static study.querydsl.entity.QMember.member;
 import static study.querydsl.entity.QTeam.team;
 
-public class MemberRepositoryImpl implements MemberRepositoryCustom {
+public class MemberRepositoryImpl/* extends QuerydslRepositorySupport */implements MemberRepositoryCustom {
+
+/*    public MemberRepositoryImpl() {
+        super(Member.class);
+    }*/
 
     private final JPAQueryFactory queryFactory;
     //JPAQueryFactory를 빈 등록했을 시(QuerydslApplication.java) 참조
@@ -33,13 +39,34 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
     @Override
     public List<MemberTeamDto> search(MemberSearchCondition condition) {
-        return queryFactory
+
+/*
+        EntityManager em = getEntityManager();
+        List<MemberTeamDto> result = from(member)
+                .leftJoin(member.team, team)
+                .where(
+                        usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe())
+                )
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
                         member.username,
                         member.age,
                         team.id.as("teamId"),
                         team.name.as("teamName")
+                ))
+                .fetch();
+*/
+
+        return queryFactory
+                .select(new QMemberTeamDto(
+                                member.id.as("memberId"),
+                                member.username,
+                                member.age,
+                                team.id.as("teamId"),
+                                team.name.as("teamName")
                 ))
                 .from(member)
                 .leftJoin(member.team, team)
